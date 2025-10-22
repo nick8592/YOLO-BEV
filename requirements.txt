@@ -1,0 +1,28 @@
+# Core Dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# YOLO
+ultralytics>=8.0.0
+
+# nuScenes Dataset
+nuscenes-devkit>=1.1.9
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Utilities
+PyYAML>=6.0
+tqdm>=4.65.0
+tensorboard>=2.13.0
+
+# 3D Processing
+scipy>=1.10.0
+pyquaternion>=0.9.9
+
+# Testing
+pytest>=7.4.0
