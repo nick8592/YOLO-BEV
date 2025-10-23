@@ -127,7 +127,17 @@ class Visualizer:
         return image
     
     def _get_3d_box_corners(self, x, y, z, w, h, l, yaw):
-        """Get 8 corners of 3D bounding box"""
+        """
+        Get 8 corners of 3D bounding box in camera coordinates
+        
+        IMPORTANT: Expects dimensions (w, h, l) to be the actual extents in camera frame:
+        - w: width (x-axis extent, lateral)
+        - h: height (y-axis extent, vertical)  
+        - l: length (z-axis extent, depth)
+        
+        These should already account for the box orientation, or yaw should be small
+        if dimensions are axis-aligned in camera frame.
+        """
         # Define box in local coordinates (centered at origin)
         corners = np.array([
             [-w/2, -h/2, -l/2],
@@ -258,3 +268,44 @@ class Visualizer:
         """Save visualization to file"""
         cv2.imwrite(path, image)
         print(f"Visualization saved to {path}")
+    
+    def create_bev_comparison(self, bev_pred, bev_gt, detections_2d=None):
+        """
+        Create side-by-side comparison of predicted and ground truth BEV
+        
+        Args:
+            bev_pred: Predicted BEV map
+            bev_gt: Ground truth BEV map
+            detections_2d: Optional detection info for title
+        
+        Returns:
+            combined: Side-by-side BEV comparison image
+        """
+        target_height = 600
+        
+        # Resize both BEV maps
+        bev_pred_resized = cv2.resize(bev_pred, 
+                                     (int(bev_pred.shape[1] * target_height / bev_pred.shape[0]), 
+                                      target_height))
+        bev_gt_resized = cv2.resize(bev_gt, 
+                                   (int(bev_gt.shape[1] * target_height / bev_gt.shape[0]), 
+                                    target_height))
+        
+        # Concatenate horizontally
+        combined = np.hstack([bev_pred_resized, bev_gt_resized])
+        
+        # Add titles
+        cv2.putText(combined, 'Predicted BEV', (10, 30),
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        cv2.putText(combined, 'Ground Truth BEV', 
+                   (bev_pred_resized.shape[1] + 10, 30),
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        
+        # Add detection count if available
+        if detections_2d is not None:
+            num_det = len(detections_2d.get('boxes', []))
+            cv2.putText(combined, f'Detected: {num_det} objects', 
+                       (10, combined.shape[0] - 10),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        
+        return combined

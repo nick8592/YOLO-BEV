@@ -25,9 +25,32 @@ python scripts/demo.py
 python scripts/inference.py --image test.jpg --output outputs/
 ```
 
+### Inference with Checkpoint
+```bash
+python scripts/inference.py \
+    --image test.jpg \
+    --checkpoint checkpoints/final_model.pth \
+    --output outputs/
+```
+
 ### Inference on Directory
 ```bash
 python scripts/inference.py --image /path/to/images/ --output outputs/
+```
+
+### Inference with Ground Truth Comparison (NEW!)
+```bash
+# Run on nuScenes dataset with GT visualization
+python scripts/inference.py \
+    --nuscenes \
+    --num-samples 5 \
+    --checkpoint checkpoints/final_model.pth \
+    --output outputs/inference_with_gt
+
+# Outputs three files per sample:
+#   - sample_X_gt_combined.jpg (GT 3D boxes + GT BEV)
+#   - sample_X_pred_combined.jpg (predicted 3D boxes + predicted BEV)
+#   - sample_X_comparison.jpg (predicted vs GT BEV)
 ```
 
 ### Training

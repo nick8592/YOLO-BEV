@@ -67,6 +67,21 @@ python scripts/inference.py \
     --output outputs/inference
 ```
 
+### Inference with Ground Truth Comparison (NEW!)
+Run inference on nuScenes dataset with ground truth visualization:
+```bash
+python scripts/inference.py \
+    --nuscenes \
+    --num-samples 5 \
+    --checkpoint checkpoints/final_model.pth \
+    --output outputs/inference_with_gt
+```
+
+This generates three types of outputs for each sample:
+- `sample_X_gt_combined.jpg` - Camera image with GT 3D boxes + GT BEV map
+- `sample_X_pred_combined.jpg` - Camera image with predicted 3D boxes + predicted BEV map
+- `sample_X_comparison.jpg` - Side-by-side predicted vs ground truth BEV comparison
+
 ### Training
 Train the 3D estimation module:
 ```bash
@@ -89,6 +104,9 @@ python scripts/train.py --config configs/config.yaml --epochs 100
 - 📊 Enhanced BEV visualization with larger, color-coded boxes
 - 🎯 Improved depth estimation with multi-cue approach (5-100m range)
 - ✅ Completed full model training (100 epochs, 109MB checkpoint)
+- 🔧 **Fixed coordinate system transformations** for accurate 3D box dimensions
+- 📸 **Enhanced inference script** with ground truth comparison and multiple visualization modes
+- 🎯 **Corrected box corner generation** using nuScenes native methods for proper width/height/length
 
 See [UPDATES.md](docs/UPDATES.md) for detailed change history.
 

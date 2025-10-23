@@ -195,16 +195,16 @@ def prepare_targets(annotations, roi_indices, device):
     
     for idx in roi_indices:
         # Get annotations for this image
-        boxes_3d = annotations['boxes_3d'][idx]
+        boxes_3d = annotations['boxes_3d'][idx]  # [x, y, z, w, h, l] in camera coords
         orientations = annotations['orientations'][idx]
         depths = annotations['depths'][idx]
         
-        # Extract target values (simplified - would need proper indexing in practice)
+        # Extract target values
         if len(boxes_3d) > 0:
-            targets['dimensions'].append(boxes_3d[:3])  # w, h, l
+            targets['dimensions'].append(boxes_3d[3:6])  # w, h, l (indices 3, 4, 5)
             targets['orientation'].append(orientations)
             targets['depth'].append(depths)
-            targets['location_offset'].append([boxes_3d[0], boxes_3d[1]])
+            targets['location_offset'].append([boxes_3d[0], boxes_3d[1]])  # x, y offsets
     
     # Convert to tensors
     for key in targets:
