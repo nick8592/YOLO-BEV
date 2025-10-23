@@ -94,7 +94,7 @@ class BEVTransform:
         
         Args:
             boxes_bev: List of boxes in BEV coordinates
-            class_ids: List of class IDs for each box
+            class_ids: List of class IDs for each box (COCO class IDs)
         
         Returns:
             bev_map: BEV occupancy map [H, W, 3] (RGB image)
@@ -102,18 +102,22 @@ class BEVTransform:
         # Create blank BEV map
         bev_map = np.zeros((self.bev_height, self.bev_width, 3), dtype=np.uint8)
         
-        # Define colors for different object classes
+        # Define COCO class names
+        coco_class_names = {
+            0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 5: 'bus',
+            7: 'truck', 9: 'traffic light', 11: 'stop sign'
+        }
+        
+        # Define colors matching 2D detection boxes (BGR format for OpenCV)
         colors = {
-            0: (255, 0, 0),      # car - red
-            1: (255, 128, 0),    # truck - orange
-            2: (255, 255, 0),    # bus - yellow
-            3: (0, 255, 0),      # trailer - green
-            4: (0, 255, 255),    # construction - cyan
-            5: (0, 0, 255),      # pedestrian - blue
-            6: (255, 0, 255),    # motorcycle - magenta
-            7: (128, 0, 255),    # bicycle - purple
-            8: (255, 255, 255),  # traffic_cone - white
-            9: (128, 128, 128),  # barrier - gray
+            'car': (0, 0, 255),           # Blue
+            'truck': (0, 128, 255),       # Orange
+            'bus': (0, 255, 255),         # Cyan/Yellow
+            'person': (255, 0, 0),        # Red (pedestrian)
+            'motorcycle': (255, 0, 255),  # Magenta
+            'bicycle': (255, 0, 128),     # Purple
+            'traffic light': (200, 200, 0),  # Yellow
+            'stop sign': (255, 100, 100), # Light red
         }
         default_color = (200, 200, 200)
         
@@ -121,27 +125,33 @@ class BEVTransform:
         for i, box in enumerate(boxes_bev):
             x_bev, y_bev, width, length, yaw = box
             
-            # Get color
+            # Get color based on COCO class ID
             color = default_color
             if class_ids is not None and i < len(class_ids):
                 class_id = int(class_ids[i])
-                color = colors.get(class_id, default_color)
+                class_name = coco_class_names.get(class_id, None)
+                if class_name:
+                    color = colors.get(class_name, default_color)
+            
+            # Make boxes much larger and more visible (scale up by 5x)
+            width_scaled = max(width * 1.0, 20)  # At least 20 pixels
+            length_scaled = max(length * 1.0, 20)  # At least 20 pixels
             
             # Get rotated box corners
-            corners = self._get_box_corners(x_bev, y_bev, width, length, yaw)
+            corners = self._get_box_corners(x_bev, y_bev, width_scaled, length_scaled, yaw)
             
-            # Draw filled polygon
+            # Draw filled polygon with the class color
             cv2.fillPoly(bev_map, [corners], color)
             
-            # Draw box outline
-            cv2.polylines(bev_map, [corners], True, (255, 255, 255), 2)
+            # Draw thicker box outline in black for better visibility
+            cv2.polylines(bev_map, [corners], True, (0, 0, 0), 3)
             
-            # Draw orientation arrow
-            arrow_length = max(width, length) * 0.5
+            # Draw orientation arrow in white (not green) - shorter and thinner
+            arrow_length = max(width_scaled, length_scaled) * 0.3
             end_x = int(x_bev + arrow_length * np.cos(yaw))
             end_y = int(y_bev + arrow_length * np.sin(yaw))
             cv2.arrowedLine(bev_map, (int(x_bev), int(y_bev)), 
-                          (end_x, end_y), (0, 255, 0), 2)
+                          (end_x, end_y), (255, 255, 255), 1, tipLength=0.4)
         
         # Draw ego vehicle (at the center bottom)
         ego_x = self.bev_width // 2
