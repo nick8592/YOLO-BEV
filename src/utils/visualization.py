@@ -31,19 +31,19 @@ class Visualizer:
         
         # Define colors for each class (BGR format for OpenCV)
         self.colors = {
-            'car': (0, 0, 255),
-            'truck': (0, 128, 255),
-            'bus': (0, 255, 255),
-            'trailer': (0, 255, 0),
-            'construction_vehicle': (255, 255, 0),
-            'pedestrian': (255, 0, 0),
-            'person': (255, 0, 0),  # Map COCO person to pedestrian color
-            'motorcycle': (255, 0, 255),
-            'bicycle': (255, 0, 128),
-            'traffic_cone': (255, 255, 255),
-            'traffic light': (200, 200, 0),  # Add traffic light
-            'barrier': (128, 128, 128),
-            'stop sign': (255, 100, 100),
+            'car': (255, 0, 0),           # Blue in BGR
+            'truck': (255, 128, 0),       # Orange in BGR
+            'bus': (255, 255, 0),         # Cyan in BGR
+            'trailer': (0, 255, 0),       # Green in BGR
+            'construction_vehicle': (0, 255, 255),  # Yellow in BGR
+            'pedestrian': (0, 0, 255),    # Red in BGR
+            'person': (0, 0, 255),        # Red in BGR (pedestrian)
+            'motorcycle': (255, 0, 255),  # Magenta in BGR
+            'bicycle': (128, 0, 255),     # Purple in BGR
+            'traffic_cone': (255, 255, 255),  # White in BGR
+            'traffic light': (0, 200, 200),   # Yellow in BGR
+            'barrier': (128, 128, 128),   # Gray in BGR
+            'stop sign': (100, 100, 255), # Light red in BGR
         }
     
     def draw_2d_boxes(self, image, detections, scores=None, classes=None):

@@ -110,14 +110,14 @@ class BEVTransform:
         
         # Define colors matching 2D detection boxes (BGR format for OpenCV)
         colors = {
-            'car': (0, 0, 255),           # Blue
-            'truck': (0, 128, 255),       # Orange
-            'bus': (0, 255, 255),         # Cyan/Yellow
-            'person': (255, 0, 0),        # Red (pedestrian)
-            'motorcycle': (255, 0, 255),  # Magenta
-            'bicycle': (255, 0, 128),     # Purple
-            'traffic light': (200, 200, 0),  # Yellow
-            'stop sign': (255, 100, 100), # Light red
+            'car': (255, 0, 0),           # Blue in BGR
+            'truck': (255, 128, 0),       # Orange in BGR
+            'bus': (255, 255, 0),         # Cyan in BGR
+            'person': (0, 0, 255),        # Red in BGR (pedestrian)
+            'motorcycle': (255, 0, 255),  # Magenta in BGR
+            'bicycle': (128, 0, 255),     # Purple in BGR
+            'traffic light': (0, 200, 200),  # Yellow in BGR
+            'stop sign': (100, 100, 255), # Light red in BGR
         }
         default_color = (200, 200, 200)
         
