@@ -16,6 +16,7 @@ image:
 # YOLO Configuration
 yolo:
   model_name: "yolov8n"  # Options: yolov8n, yolov8s, yolov8m, yolov8l, yolov8x
+  weights_path: "./weights/yolov8n.pt"  # Path to YOLO weights
   confidence_threshold: 0.25
   iou_threshold: 0.45
   classes: ["car", "truck", "bus", "trailer", "construction_vehicle", 
@@ -40,8 +41,8 @@ bev:
 
 # Training Configuration
 training:
-  batch_size: 8
-  num_epochs: 100
+  batch_size: 4  # Reduced for CPU training
+  num_epochs: 10  # Reduced for testing
   learning_rate: 0.001
   weight_decay: 0.0001
   optimizer: "adam"
@@ -69,6 +70,6 @@ paths:
   log_dir: "./logs"
   
 # Device Configuration
-device: "cuda"  # cuda or cpu
+device: "cuda"  # cuda or cpu (set to cpu if CUDA not available)
 num_workers: 4
 seed: 42

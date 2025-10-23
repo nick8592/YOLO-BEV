@@ -39,18 +39,29 @@ ENV/
 *.pth
 *.pt
 !yolov8*.pt
+!weights/*.pt
 
 # Data
 nuscenes/
-/data/
+data/*
+!data/.gitkeep
 *.pkl
 *.pickle
 
 # Outputs
-outputs/
-logs/
-checkpoints/
+outputs/*
+!outputs/.gitkeep
+logs/*
+!logs/.gitkeep
+checkpoints/*
+!checkpoints/.gitkeep
 *.log
+
+# Weights (keep small models, ignore large ones)
+weights/*
+!weights/*.md
+!weights/.gitkeep
+!weights/yolov8n.pt
 
 # OS
 .DS_Store
