@@ -41,8 +41,8 @@ bev:
 
 # Training Configuration
 training:
-  batch_size: 4  # Reduced for CPU training
-  num_epochs: 10  # Reduced for testing
+  batch_size: 16  # Full batch size for GPU training
+  num_epochs: 100  # Full training epochs
   learning_rate: 0.001
   weight_decay: 0.0001
   optimizer: "adam"

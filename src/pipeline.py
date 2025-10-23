@@ -112,12 +112,27 @@ class YOLOBEVPipeline:
         print("Transforming to BEV space...")
         boxes_bev = self.bev_transform.camera_to_bev(boxes_3d)
         
-        print(f"Projected {len(boxes_bev)} boxes to BEV")
+        print(f"Projected {len(boxes_bev)} boxes to BEV (from {len(boxes_3d)} 3D boxes)")
+        
+        # Debug: Print sample 3D boxes to understand depth distribution
+        if len(boxes_3d) > 0:
+            depths = [box[2] for box in boxes_3d]
+            print(f"Depth range: min={min(depths):.2f}m, max={max(depths):.2f}m, avg={np.mean(depths):.2f}m")
+            
+            sample_box = boxes_3d[0]
+            print(f"Sample 3D box: x={sample_box[0]:.2f}m, y={sample_box[1]:.2f}m, z={sample_box[2]:.2f}m")
+            if len(boxes_bev) > 0:
+                sample_bev = boxes_bev[0]
+                print(f"Sample BEV box: x={sample_bev[0]:.2f}, y={sample_bev[1]:.2f}")
+            
+            # Show how many boxes were filtered
+            if len(boxes_bev) < len(boxes_3d):
+                print(f"⚠️  {len(boxes_3d) - len(boxes_bev)} boxes filtered (outside BEV range)")
         
         # Step 5: Create BEV visualization
         bev_map = self.bev_transform.create_bev_map(
             boxes_bev,
-            detections_2d['classes']
+            detections_2d['classes'] if len(boxes_bev) > 0 else None
         )
         
         results = {
@@ -143,24 +158,59 @@ class YOLOBEVPipeline:
         boxes_3d = []
         
         dimensions = predictions['dimensions'].cpu().numpy()
-        orientations = predictions['orientation'].cpu().numpy()
+        orientations = predictions['orientation'].cpu().numpy()  # [N, 1] - already converted to angle
         depths = predictions['depth'].cpu().numpy()
         location_offsets = predictions['location_offset'].cpu().numpy()
+        
+        # Image dimensions for normalized coordinates
+        img_width = self.config['image']['input_size'][1]
+        img_height = self.config['image']['input_size'][0]
         
         for i, box_2d in enumerate(boxes_2d):
             x1, y1, x2, y2 = box_2d
             cx_2d = (x1 + x2) / 2
             cy_2d = (y1 + y2) / 2
+            box_height = y2 - y1
             
             # Get 3D parameters
-            w, h, l = dimensions[i]
-            yaw = orientations[i, 0]
-            z = depths[i, 0]  # depth (forward distance)
+            w, h, l = np.abs(dimensions[i])  # Ensure positive dimensions
+            w = max(w, 0.5)  # Minimum 0.5m width
+            h = max(h, 0.5)  # Minimum 0.5m height
+            l = max(l, 0.5)  # Minimum 0.5m length
             
-            # Estimate x, y from 2D box center and depth
-            # This is a simplified approach - would need camera intrinsics for accurate projection
-            x = location_offsets[i, 0]
-            y = location_offsets[i, 1]
+            # Get orientation (already converted to yaw angle in model forward pass)
+            yaw = orientations[i, 0]
+            
+            # Improved depth estimation using box height and vertical position
+            # Objects lower in the image are typically closer
+            # Objects with larger bounding boxes are typically closer
+            y_normalized = cy_2d / img_height  # 0 (top) to 1 (bottom)
+            box_area = (x2 - x1) * (y2 - y1)
+            relative_size = box_area / (img_width * img_height)
+            
+            # Base depth from network prediction (scale it appropriately)
+            depth_pred = np.abs(depths[i, 0])
+            
+            # Scale depth: combine network prediction with heuristics
+            # Closer objects (bottom of image) should have smaller z
+            # Larger objects should have smaller z
+            z_base = 10.0 + depth_pred * 30.0  # Scale to 10-40m range
+            z_position = (1.0 - y_normalized) * 20.0  # Objects at top: +20m, bottom: 0m
+            z_size = (1.0 - np.clip(relative_size * 50, 0, 0.8)) * 15.0  # Large boxes: closer
+            
+            z = z_base + z_position + z_size
+            z = np.clip(z, 5.0, 100.0)  # Clip to reasonable range
+            
+            # Estimate lateral position (x) from 2D box center
+            # Normalize to image center and scale by depth
+            x_normalized = (cx_2d - img_width / 2) / (img_width / 2)
+            x = x_normalized * z * 0.6  # Lateral offset proportional to depth
+            
+            # y is height above ground (assume objects on ground plane)
+            y = -h / 2  # Center at ground level
+            
+            # Add location offsets from network (scaled down)
+            x += location_offsets[i, 0] * 5.0
             
             boxes_3d.append([x, y, z, w, h, l, yaw])
         

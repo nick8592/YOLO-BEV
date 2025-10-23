@@ -42,12 +42,14 @@ class BEVTransform:
                       Each box: [x_bev, y_bev, width, length, yaw]
         """
         boxes_bev = []
+        filtered_reasons = {'z_range': 0, 'out_of_bounds': 0}
         
         for box in boxes_3d:
             x, y, z, w, h, l, yaw = box
             
-            # Filter by z-range (height above ground)
-            if z < self.z_range[0] or z > self.z_range[1]:
+            # Filter by z-range (height above ground) - less restrictive
+            if y < self.z_range[0] - 5 or y > self.z_range[1] + 5:
+                filtered_reasons['z_range'] += 1
                 continue
             
             # Convert to BEV coordinates
@@ -56,16 +58,25 @@ class BEVTransform:
             x_bev = self._world_to_bev_x(x)
             y_bev = self._world_to_bev_y(z)  # Note: z maps to y in BEV
             
-            # Check if within BEV range
-            if (x_bev < 0 or x_bev >= self.bev_width or 
-                y_bev < 0 or y_bev >= self.bev_height):
+            # Check if within BEV range (allow some margin)
+            if (x_bev < -10 or x_bev >= self.bev_width + 10 or 
+                y_bev < -10 or y_bev >= self.bev_height + 10):
+                filtered_reasons['out_of_bounds'] += 1
                 continue
+            
+            # Clip to valid range
+            x_bev = np.clip(x_bev, 0, self.bev_width - 1)
+            y_bev = np.clip(y_bev, 0, self.bev_height - 1)
             
             # Convert dimensions to BEV pixels
             width_bev = w / self.resolution
             length_bev = l / self.resolution
             
             boxes_bev.append([x_bev, y_bev, width_bev, length_bev, yaw])
+        
+        # Debug output
+        if filtered_reasons['z_range'] > 0 or filtered_reasons['out_of_bounds'] > 0:
+            print(f"  Filtered: {filtered_reasons['z_range']} by height, {filtered_reasons['out_of_bounds']} out of bounds")
         
         return boxes_bev
     
