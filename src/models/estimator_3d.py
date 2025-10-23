@@ -42,24 +42,30 @@ class Estimator3D(nn.Module):
     def _build_backbone(self):
         """Build feature extraction backbone"""
         if 'resnet50' in self.backbone_name:
-            backbone = models.resnet50(pretrained=True)
+            # Use weights parameter instead of deprecated pretrained
+            from torchvision.models import ResNet50_Weights
+            backbone = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
             # Remove final FC layer
             backbone = nn.Sequential(*list(backbone.children())[:-1])
             
         elif 'resnet101' in self.backbone_name:
-            backbone = models.resnet101(pretrained=True)
+            from torchvision.models import ResNet101_Weights
+            backbone = models.resnet101(weights=ResNet101_Weights.IMAGENET1K_V1)
             backbone = nn.Sequential(*list(backbone.children())[:-1])
             
         elif 'vgg16' in self.backbone_name:
-            backbone = models.vgg16(pretrained=True).features
+            from torchvision.models import VGG16_Weights
+            backbone = models.vgg16(weights=VGG16_Weights.IMAGENET1K_V1).features
             self.feature_dim = 512
             
         elif 'vgg19' in self.backbone_name:
-            backbone = models.vgg19(pretrained=True).features
+            from torchvision.models import VGG19_Weights
+            backbone = models.vgg19(weights=VGG19_Weights.IMAGENET1K_V1).features
             self.feature_dim = 512
             
         elif 'efficientnet' in self.backbone_name:
-            backbone = models.efficientnet_b0(pretrained=True)
+            from torchvision.models import EfficientNet_B0_Weights
+            backbone = models.efficientnet_b0(weights=EfficientNet_B0_Weights.IMAGENET1K_V1)
             backbone = nn.Sequential(*list(backbone.children())[:-1])
             self.feature_dim = 1280
             

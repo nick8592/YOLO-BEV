@@ -104,8 +104,12 @@ def main():
             epoch
         )
         
-        # Update learning rate
+        # Update learning rate (after optimizer.step() has been called in train_epoch)
         scheduler.step()
+        
+        # Log current learning rate
+        current_lr = optimizer.param_groups[0]['lr']
+        print(f"Epoch {epoch + 1} - Loss: {train_loss:.4f}, LR: {current_lr:.6f}")
         
         # Save checkpoint
         if (epoch + 1) % 10 == 0:
