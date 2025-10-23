@@ -10,7 +10,7 @@ setup(
     name="yolo-bev",
     version="0.1.0",
     author="Nick",
-    author_email="nickybai8592@gmail.com",
+    author_email="weichenpai57@gmail.com",
     description="YOLO-based 3D Object Detection with BEV Transformation for ADAS",
     long_description=long_description,
     long_description_content_type="text/markdown",

@@ -22,6 +22,13 @@ class Visualizer:
         self.config = config
         self.classes = config['yolo']['classes']
         
+        # COCO class names (YOLO uses COCO dataset)
+        self.coco_class_names = {
+            0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 5: 'bus',
+            7: 'truck', 9: 'traffic light', 10: 'fire hydrant', 11: 'stop sign',
+            12: 'parking meter', 13: 'bench', 16: 'bird', 17: 'cat', 18: 'dog'
+        }
+        
         # Define colors for each class (BGR format for OpenCV)
         self.colors = {
             'car': (0, 0, 255),
@@ -30,10 +37,13 @@ class Visualizer:
             'trailer': (0, 255, 0),
             'construction_vehicle': (255, 255, 0),
             'pedestrian': (255, 0, 0),
+            'person': (255, 0, 0),  # Map COCO person to pedestrian color
             'motorcycle': (255, 0, 255),
             'bicycle': (255, 0, 128),
             'traffic_cone': (255, 255, 255),
-            'barrier': (128, 128, 128)
+            'traffic light': (200, 200, 0),  # Add traffic light
+            'barrier': (128, 128, 128),
+            'stop sign': (255, 100, 100),
         }
     
     def draw_2d_boxes(self, image, detections, scores=None, classes=None):
@@ -44,7 +54,7 @@ class Visualizer:
             image: Input image (numpy array)
             detections: 2D bounding boxes [N, 4] (x1, y1, x2, y2)
             scores: Confidence scores [N]
-            classes: Class IDs [N]
+            classes: Class IDs [N] (COCO class IDs from YOLO)
         
         Returns:
             image: Image with drawn boxes
@@ -57,7 +67,8 @@ class Visualizer:
             # Get class and color
             if classes is not None and i < len(classes):
                 class_id = int(classes[i])
-                class_name = self.classes[class_id] if class_id < len(self.classes) else 'unknown'
+                # Use COCO class names since YOLO outputs COCO class IDs
+                class_name = self.coco_class_names.get(class_id, f'class_{class_id}')
                 color = self.colors.get(class_name, (255, 255, 255))
             else:
                 class_name = 'object'
