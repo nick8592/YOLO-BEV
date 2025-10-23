@@ -6,12 +6,13 @@ A perception pipeline for Advanced Driver Assistance Systems (ADAS) that combine
 
 For detailed documentation, see the following files in the `docs/` directory:
 
-- **[PROPOSAL.md](docs/PROPOSAL.md)** - Original project proposal with architecture and methodology
-- **[IMPLEMENTATION.md](docs/IMPLEMENTATION.md)** - Implementation details and technical documentation
+- **[UPDATES.md](docs/UPDATES.md)** - ⭐ Recent updates and improvements (October 2025)
 - **[QUICKSTART.md](docs/QUICKSTART.md)** - Quick reference guide for common tasks
+- **[IMPLEMENTATION.md](docs/IMPLEMENTATION.md)** - Implementation details and technical documentation
 - **[TRAINING_READINESS.md](docs/TRAINING_READINESS.md)** - Training preparation and execution guide
 - **[GPU_ACCESS_GUIDE.md](docs/GPU_ACCESS_GUIDE.md)** - GPU setup and troubleshooting solutions
 - **[PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)** - Complete project structure documentation
+- **[PROPOSAL.md](docs/PROPOSAL.md)** - Original project proposal with architecture and methodology
 
 ## Quick Start
 
@@ -50,6 +51,22 @@ Run inference on a single image:
 python scripts/inference.py --image path/to/image.jpg --output outputs/inference
 ```
 
+Run inference with trained checkpoint:
+```bash
+python scripts/inference.py \
+    --image nuscenes/samples/CAM_FRONT/sample.jpg \
+    --checkpoint checkpoints/final_model.pth \
+    --output outputs/inference
+```
+
+Process entire directory:
+```bash
+python scripts/inference.py \
+    --image nuscenes/samples/CAM_FRONT/ \
+    --checkpoint checkpoints/final_model.pth \
+    --output outputs/inference
+```
+
 ### Training
 Train the 3D estimation module:
 ```bash
@@ -58,10 +75,22 @@ python scripts/train.py --config configs/config.yaml --epochs 100
 
 ## Features
 
-- Monocular 3D object detection from front-camera images
-- YOLO-powered 2D detection with 3D regression
-- BEV transformation for spatial planning
-- Real-time performance optimized for ADAS applications
+- ✅ **Monocular 3D object detection** from front-camera images
+- ✅ **YOLO-powered 2D detection** with COCO class support (persons, cars, trucks, buses, etc.)
+- ✅ **3D bounding box estimation** with depth, dimensions, and orientation
+- ✅ **BEV transformation** for spatial planning and visualization
+- ✅ **Color-coded visualization** with matching colors in 2D and BEV views
+- ✅ **Trained model** ready for inference (100 epochs on nuScenes)
+- 🚀 **Real-time performance** optimized for ADAS applications
+
+### Recent Improvements (October 2025)
+- 🎨 Fixed BGR color channels for correct visualization
+- 🏷️ Added COCO class label mapping (person, car, bus, truck, traffic light, etc.)
+- 📊 Enhanced BEV visualization with larger, color-coded boxes
+- 🎯 Improved depth estimation with multi-cue approach (5-100m range)
+- ✅ Completed full model training (100 epochs, 109MB checkpoint)
+
+See [UPDATES.md](docs/UPDATES.md) for detailed change history.
 
 ## Project Structure
 

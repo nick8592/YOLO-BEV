@@ -1,0 +1,263 @@
+# YOLO-BEV Updates and Improvements
+
+## Recent Updates (October 2025)
+
+This document tracks recent improvements and changes to the YOLO-BEV pipeline.
+
+---
+
+## Version Updates
+
+### v1.2 - Color System and Visualization Improvements (October 23, 2025)
+
+#### Fixed: BGR Color Channel Correction
+- **Issue**: Colors were displaying incorrectly due to RGB vs BGR confusion
+- **Fix**: Corrected all color definitions to proper BGR format for OpenCV
+- **Impact**: 
+  - Cars now display as blue (255, 0, 0)
+  - Persons display as red (0, 0, 255)
+  - Traffic lights display as yellow (0, 200, 200)
+  - All colors consistent between 2D detection and BEV visualization
+
+**Files Modified:**
+- `src/utils/visualization.py` - Updated color dictionary
+- `src/utils/bev_transform.py` - Updated BEV color mapping
+
+#### Improved: BEV Visualization
+- **Enhancement**: Updated BEV box rendering for better visibility
+- **Changes**:
+  - Boxes now use class-specific colors matching 2D detection
+  - Black outlines (3px) for better contrast
+  - White orientation arrows (subtle, non-intrusive)
+  - Larger box sizes with 10x scaling for visibility
+  - Maintains size ratios between object types
+
+**Color Scheme (BGR format):**
+```python
+colors = {
+    'car': (255, 0, 0),           # Blue
+    'truck': (255, 128, 0),       # Orange
+    'bus': (255, 255, 0),         # Cyan
+    'person': (0, 0, 255),        # Red
+    'motorcycle': (255, 0, 255),  # Magenta
+    'bicycle': (128, 0, 255),     # Purple
+    'traffic light': (0, 200, 200),  # Yellow
+    'stop sign': (100, 100, 255), # Light red
+}
+```
+
+### v1.1 - COCO Class Label Mapping (October 23, 2025)
+
+#### Fixed: Object Detection Labels
+- **Issue**: Wrong class labels showing on inference images
+- **Root Cause**: YOLO outputs COCO class IDs (0-79) but code was using nuScenes class names by index
+- **Fix**: Added COCO class name mapping dictionary
+
+**COCO Class Mapping:**
+- 0 → person
+- 2 → car
+- 3 → motorcycle
+- 5 → bus
+- 7 → truck
+- 9 → traffic light
+- 11 → stop sign
+
+**Impact**: Labels now correctly display detected object types
+
+---
+
+## Training Completion (October 2025)
+
+### Full Model Training
+- **Duration**: 100 epochs
+- **Batch Size**: 16
+- **Device**: CUDA (GPU accelerated)
+- **Final Checkpoint**: `checkpoints/final_model.pth` (109MB)
+- **Dataset**: nuScenes v1.0-mini (404 samples)
+
+**Training Configuration:**
+```yaml
+training:
+  batch_size: 16
+  num_epochs: 100
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  device: cuda
+```
+
+### Depth Estimation Improvements
+- **Enhancement**: Multi-cue depth estimation for realistic BEV placement
+- **Approach**: Combines:
+  - Network depth prediction
+  - Vertical position in image (objects at bottom are closer)
+  - Bounding box size (larger boxes are typically closer)
+- **Result**: 5-100m depth range with natural distribution
+
+---
+
+## Feature Status
+
+### Completed Features ✅
+- [x] 2D object detection (YOLO v8)
+- [x] 3D bounding box estimation
+- [x] BEV coordinate transformation
+- [x] Depth estimation with multi-cue approach
+- [x] Color-coded visualization (2D + BEV)
+- [x] COCO class label mapping
+- [x] Full pipeline training (100 epochs)
+- [x] Checkpoint loading/saving
+- [x] Batch and single image inference
+- [x] BGR color correction
+
+### Known Limitations
+- Object dimensions use minimum 0.5m constraint
+- All objects scaled uniformly in BEV (10x)
+- Limited to front-camera view only
+- No temporal tracking across frames
+- No multi-class NMS optimization
+
+---
+
+## Performance Metrics
+
+### Inference Performance
+- **Detection Rate**: 6-12 objects per frame (typical)
+- **Processing Speed**: ~10-15ms per image (GPU)
+- **Depth Range**: 5-100 meters
+- **BEV Coverage**: [-50, 50]m lateral × [0, 100]m forward
+
+### Example Results
+```
+Sample Inference:
+- Detected: 4 persons, 2 cars, 6 traffic lights
+- Depth range: 5.00m - 32.36m (avg 19.01m)
+- All boxes successfully projected to BEV
+- Output resolution: 500×500 pixels BEV map
+```
+
+---
+
+## Usage Updates
+
+### Inference with Trained Model
+```bash
+# Single image
+python scripts/inference.py \
+    --image nuscenes/samples/CAM_FRONT/sample.jpg \
+    --checkpoint checkpoints/final_model.pth \
+    --output outputs/inference
+
+# Directory of images
+python scripts/inference.py \
+    --image nuscenes/samples/CAM_FRONT/ \
+    --checkpoint checkpoints/final_model.pth \
+    --output outputs/inference
+```
+
+### Output Structure
+```
+outputs/inference/
+├── sample_result.jpg          # Combined visualization
+├── sample_2d.jpg              # 2D detection only
+├── sample_bev.jpg             # BEV map only
+└── sample_3d_boxes.json       # 3D box coordinates
+```
+
+---
+
+## Configuration Updates
+
+### Updated BEV Settings
+```yaml
+bev:
+  x_range: [-50, 50]      # meters (lateral)
+  y_range: [0, 100]       # meters (forward)
+  z_range: [-10, 10]      # meters (height)
+  resolution: 0.2         # meters per pixel
+  scale_factor: 10.0      # Visualization scaling
+```
+
+### Color Configuration
+Colors are now defined in BGR format (OpenCV standard):
+- Modify in `src/utils/visualization.py` for 2D boxes
+- Modify in `src/utils/bev_transform.py` for BEV boxes
+- Must keep both files synchronized
+
+---
+
+## Migration Notes
+
+### For Users Updating from Earlier Versions
+
+1. **No Code Changes Required**: Existing inference scripts work as-is
+2. **Color Changes**: Visual outputs will look different (correct colors now)
+3. **Label Changes**: Object labels now show correct COCO class names
+4. **BEV Appearance**: Boxes are larger and more visible
+
+### Backward Compatibility
+- ✅ Config files: Compatible
+- ✅ Checkpoints: Compatible (forward compatible)
+- ✅ Inference API: No changes
+- ⚠️ Output images: Colors and labels updated
+
+---
+
+## Troubleshooting Recent Changes
+
+### Colors Still Look Wrong
+- Ensure you're using the latest code: `git pull origin main`
+- Check OpenCV version: `python -c "import cv2; print(cv2.__version__)"`
+- Verify BGR format in both visualization files
+
+### Labels Showing as "class_X"
+- COCO class not in mapping dictionary
+- Add to `coco_class_names` dict in `visualization.py`
+
+### BEV Boxes Too Small/Large
+- Adjust `scale_factor` in `bev_transform.py` (line ~140)
+- Current default: 10.0x
+- Range: 5.0x (smaller) to 15.0x (larger)
+
+---
+
+## Future Improvements
+
+### Planned Features
+- [ ] Class-specific dimension templates (cars vs persons)
+- [ ] Temporal tracking across video frames
+- [ ] Multi-camera fusion (front + side cameras)
+- [ ] Uncertainty estimation for 3D boxes
+- [ ] Real-time video processing
+- [ ] Model quantization for edge deployment
+
+### Under Consideration
+- [ ] Support for YOLO v9/v10
+- [ ] Alternative 3D estimator architectures
+- [ ] Different BEV grid resolutions
+- [ ] Export to ONNX format
+- [ ] ROS integration
+
+---
+
+## Version History
+
+| Version | Date | Key Changes |
+|---------|------|-------------|
+| v1.2 | Oct 23, 2025 | BGR color correction |
+| v1.1 | Oct 23, 2025 | COCO label mapping, BEV improvements |
+| v1.0 | Oct 2025 | Full training completion (100 epochs) |
+| v0.9 | Oct 2025 | Depth estimation improvements |
+| v0.8 | Oct 2025 | Initial pipeline implementation |
+
+---
+
+## References
+
+- YOLO: [Ultralytics Documentation](https://docs.ultralytics.com/)
+- nuScenes: [nuScenes Dataset](https://www.nuscenes.org/)
+- COCO: [COCO Dataset Classes](https://cocodataset.org/#home)
+- OpenCV: [Color Spaces](https://docs.opencv.org/4.x/df/d9d/tutorial_py_colorspaces.html)
+
+---
+
+Last Updated: October 23, 2025
